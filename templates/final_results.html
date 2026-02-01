@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block content %}
+<h1>🏆 Final Results</h1>
+
+<table class="scores-table">
+    <tr>
+        <th>Rank</th>
+        <th>Player</th>
+        <th>Final Score</th>
+    </tr>
+    {% for player, score in players_scores %}
+    <tr {% if loop.first %}class="winner"{% endif %}>
+        <td>{{ loop.index }}</td>
+        <td>{{ player }}{% if loop.first %} 🏆{% endif %}</td>
+        <td>{{ score }}</td>
+    </tr>
+    {% endfor %}
+</table>
+
+<h2>Game Summary</h2>
+<table class="scores-table">
+    <tr>
+        <th>Round</th>
+        <th>Winner</th>
+        <th>Scores</th>
+    </tr>
+    {% for round in game_history %}
+    <tr>
+        <td>{{ round.round_num }}: {{ round.round_name }}</td>
+        <td class="winner">{{ round.winner }}</td>
+        <td>
+            {% for player, score in round.scores.items() %}
+            {{ player }}: {{ score }}{% if not loop.last %}, {% endif %}
+            {% endfor %}
+        </td>
+    </tr>
+    {% endfor %}
+</table>
+
+<div style="text-align: center; margin-top: 30px;">
+    <a href="/" style="display: inline-block; background-color: #4CAF50; color: white; padding: 15px 30px; text-decoration: none; border-radius: 5px; font-size: 18px;">Play Again</a>
+</div>
+{% endblock %}
