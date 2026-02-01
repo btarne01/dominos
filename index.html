@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dominoes Score Keeper</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #eee;
+        }
+        .container {
+            background: rgba(255, 255, 255, 0.08);
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            backdrop-filter: blur(10px);
+        }
+        h1, h2 { text-align: center; color: #fff; }
+        h1 { font-size: 1.8rem; margin-bottom: 0.5rem; }
+        .subtitle { text-align: center; color: #aaa; margin-bottom: 24px; }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; margin-bottom: 6px; color: #ccc; }
+        input, select, button {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid rgba(255,255,255,0.2);
+            border-radius: 8px;
+            font-size: 16px;
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        input::placeholder { color: rgba(255,255,255,0.5); }
+        select option { background: #1a1a2e; color: #fff; }
+        button, .btn {
+            background: linear-gradient(135deg, #0f9b0f 0%, #088308 100%);
+            color: white;
+            border: none;
+            cursor: pointer;
+            margin-top: 12px;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-block;
+            text-align: center;
+        }
+        button:hover, .btn:hover { background: linear-gradient(135deg, #12b312 0%, #0a9a0a 100%); }
+        .btn-secondary { background: linear-gradient(135deg, #555 0%, #333 100%); }
+        .scores-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+        .scores-table th, .scores-table td {
+            border: 1px solid rgba(255,255,255,0.15);
+            padding: 12px;
+            text-align: left;
+        }
+        .scores-table th {
+            background: rgba(255,255,255,0.1);
+            color: #fff;
+        }
+        .winner { background: rgba(15, 155, 15, 0.3); font-weight: bold; }
+        .reset-link { display: block; text-align: center; margin-top: 24px; color: #888; }
+        .reset-link:hover { color: #0f9b0f; }
+        .screen { display: none; }
+        .screen.active { display: block; }
+        .btn-group { text-align: center; margin-top: 24px; }
+        #player_inputs .form-group { margin-bottom: 12px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Home Screen -->
+        <div id="home-screen" class="screen active">
+            <h1>🎯 Dominoes Score Keeper</h1>
+            <p class="subtitle">Keep track of scores for dominoes games from 12s down to blanks!</p>
+            <div class="btn-group">
+                <button type="button" onclick="showScreen('setup-screen')" style="max-width: 280px;">Start New Game</button>
+            </div>
+        </div>
+
+        <!-- Setup Screen -->
+        <div id="setup-screen" class="screen">
+            <h1>Game Setup</h1>
+            <form id="setup-form" onsubmit="startGame(event)">
+                <div class="form-group">
+                    <label for="num_players">Number of Players:</label>
+                    <select id="num_players" name="num_players" onchange="updatePlayerInputs()">
+                        <option value="2">2</option><option value="3">3</option><option value="4">4</option>
+                        <option value="5">5</option><option value="6">6</option><option value="7">7</option>
+                        <option value="8">8</option><option value="9">9</option><option value="10">10</option>
+                    </select>
+                </div>
+                <div id="player_inputs"></div>
+                <button type="submit">Start Game</button>
+            </form>
+        </div>
+
+        <!-- Game Screen -->
+        <div id="game-screen" class="screen">
+            <h1 id="round-title">Round</h1>
+            <h2>Current Standings</h2>
+            <table class="scores-table">
+                <thead><tr><th>Player</th><th>Total Score</th></tr></thead>
+                <tbody id="standings-body"></tbody>
+            </table>
+            <h2>Enter Round Results</h2>
+            <form id="round-form" onsubmit="submitRound(event)">
+                <div class="form-group">
+                    <label for="winner">Who went out first (winner)?</label>
+                    <select id="winner" name="winner" required onchange="updatePipInputs()">
+                        <option value="">Select winner...</option>
+                    </select>
+                </div>
+                <div id="pip_inputs"></div>
+                <button type="submit">Submit Round</button>
+            </form>
+            <div id="game-history-section" style="display:none;">
+                <h2>Game History</h2>
+                <table class="scores-table">
+                    <thead><tr><th>Round</th><th>Winner</th><th>Scores</th></tr></thead>
+                    <tbody id="history-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Final Results Screen -->
+        <div id="results-screen" class="screen">
+            <h1>🏆 Final Results</h1>
+            <table class="scores-table">
+                <thead><tr><th>Rank</th><th>Player</th><th>Final Score</th></tr></thead>
+                <tbody id="results-body"></tbody>
+            </table>
+            <h2>Game Summary</h2>
+            <table class="scores-table">
+                <thead><tr><th>Round</th><th>Winner</th><th>Scores</th></tr></thead>
+                <tbody id="summary-body"></tbody>
+            </table>
+            <div class="btn-group">
+                <button type="button" onclick="resetGame()">Play Again</button>
+            </div>
+        </div>
+
+        <a href="#" class="reset-link" onclick="resetGame(); return false;">Start New Game</a>
+    </div>
+
+    <script>
+        const ROUNDS = ['12s', '11s', '10s', '9s', '8s', '7s', '6s', '5s', '4s', '3s', '2s', '1s', 'Blanks'];
+        let state = { players: [], scores: {}, currentRound: 0, gameHistory: [] };
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        function updatePlayerInputs() {
+            const n = parseInt(document.getElementById('num_players').value);
+            const container = document.getElementById('player_inputs');
+            container.innerHTML = '';
+            for (let i = 0; i < n; i++) {
+                const div = document.createElement('div');
+                div.className = 'form-group';
+                div.innerHTML = `<label>Player ${i + 1} Name:</label><input type="text" name="player_${i}" required>`;
+                container.appendChild(div);
+            }
+        }
+
+        function startGame(e) {
+            e.preventDefault();
+            const form = e.target;
+            const numPlayers = parseInt(document.getElementById('num_players').value);
+            state.players = [];
+            for (let i = 0; i < numPlayers; i++) {
+                const name = form.querySelector(`[name="player_${i}"]`).value.trim();
+                if (name) state.players.push(name);
+            }
+            if (state.players.length < 2) { alert('Need at least 2 players!'); return; }
+            state.scores = Object.fromEntries(state.players.map(p => [p, 0]));
+            state.currentRound = 0;
+            state.gameHistory = [];
+            renderGameScreen();
+            showScreen('game-screen');
+        }
+
+        function renderGameScreen() {
+            const r = state.currentRound;
+            if (r >= ROUNDS.length) { renderFinalResults(); return; }
+            document.getElementById('round-title').textContent = `Round ${r + 1}: ${ROUNDS[r]}`;
+            const tbody = document.getElementById('standings-body');
+            const sorted = [...state.players].sort((a, b) => state.scores[a] - state.scores[b]);
+            tbody.innerHTML = sorted.map(p => `<tr><td>${p}</td><td>${state.scores[p]}</td></tr>`).join('');
+            const winnerSelect = document.getElementById('winner');
+            winnerSelect.innerHTML = '<option value="">Select winner...</option>' +
+                state.players.map(p => `<option value="${p}">${p}</option>`).join('');
+            winnerSelect.value = '';
+            updatePipInputs();
+            if (state.gameHistory.length) {
+                document.getElementById('game-history-section').style.display = 'block';
+                document.getElementById('history-body').innerHTML = state.gameHistory.map(rd =>
+                    `<tr><td>${rd.round_num}: ${rd.round_name}</td><td class="winner">${rd.winner}</td><td>${
+                        Object.entries(rd.scores).map(([p, s]) => `${p}: ${s}`).join(', ')
+                    }</td></tr>`
+                ).join('');
+            } else {
+                document.getElementById('game-history-section').style.display = 'none';
+            }
+        }
+
+        function updatePipInputs() {
+            const winner = document.getElementById('winner').value;
+            const container = document.getElementById('pip_inputs');
+            container.innerHTML = '';
+            if (winner) {
+                state.players.filter(p => p !== winner).forEach(p => {
+                    const div = document.createElement('div');
+                    div.className = 'form-group';
+                    div.innerHTML = `<label>${p}'s remaining pips:</label><input type="number" name="pips_${p}" min="0" required>`;
+                    container.appendChild(div);
+                });
+            }
+        }
+
+        function submitRound(e) {
+            e.preventDefault();
+            const form = e.target;
+            const winner = form.winner.value;
+            const roundScores = {};
+            state.players.forEach(p => {
+                const val = p === winner ? 0 : parseInt(form.querySelector(`[name="pips_${p}"]`)?.value || 0);
+                roundScores[p] = val;
+                state.scores[p] += val;
+            });
+            state.gameHistory.push({
+                round_num: state.currentRound + 1,
+                round_name: ROUNDS[state.currentRound],
+                winner,
+                scores: roundScores
+            });
+            state.currentRound++;
+            renderGameScreen();
+            if (state.currentRound >= ROUNDS.length) showScreen('results-screen');
+        }
+
+        function renderFinalResults() {
+            const sorted = [...state.players].sort((a, b) => state.scores[a] - state.scores[b]);
+            document.getElementById('results-body').innerHTML = sorted.map((p, i) =>
+                `<tr ${i === 0 ? 'class="winner"' : ''}><td>${i + 1}</td><td>${p}${i === 0 ? ' 🏆' : ''}</td><td>${state.scores[p]}</td></tr>`
+            ).join('');
+            document.getElementById('summary-body').innerHTML = state.gameHistory.map(rd =>
+                `<tr><td>${rd.round_num}: ${rd.round_name}</td><td class="winner">${rd.winner}</td><td>${
+                    Object.entries(rd.scores).map(([p, s]) => `${p}: ${s}`).join(', ')
+                }</td></tr>`
+            ).join('');
+            showScreen('results-screen');
+        }
+
+        function resetGame() {
+            state = { players: [], scores: {}, currentRound: 0, gameHistory: [] };
+            document.getElementById('setup-form').reset();
+            updatePlayerInputs();
+            showScreen('home-screen');
+        }
+
+        updatePlayerInputs();
+    </script>
+</body>
+</html>
